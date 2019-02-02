@@ -1,24 +1,25 @@
-var spr;
-var jump = 70;
+var player;
+var jump = 50;
 var playerSize = 40;
 var pipes = [];
+var pipeWidth = 50;
+var pipeHeight = 200;
 pipes[0] = {x:800,y:0};
-
 
 function preload() {
 
-  birdImg = loadImage('img/bird2.png');
+  birdImg = loadImage('img/birdImg.png');
   bgImg = loadImage('img/bgImg.jpg');
-  pipeNorth = loadImage('img/pipeImg.png');
+  pipeNorth = loadImage('img/pipeNorth2Img.png');
+  pipeSouth = loadImage('img/pipeSouthImg.png');
 }
 
 function setup() {
   createCanvas(800, 375);
-  
-  spr = createSprite(50, height/2, playerSize, playerSize);
-  spr.shapeColor = color(255);
-  spr.velocity.y = 1.5;
-  spr.addImage(birdImg);
+  player = createSprite(50, height/2, playerSize, playerSize);
+  player.shapeColor = color(255);
+  player.velocity.y = 1.4;
+  player.addImage(birdImg);
 }
 function draw() {
 
@@ -28,22 +29,19 @@ function draw() {
 
   for (let i = 0; i < pipes.length; i++) {
     image(pipeNorth,pipes[i].x,pipes[i].y);
-    pipes[i].x--;
+    var gap = 110; 
+    image(pipeSouth,pipes[i].x,pipes[i].y + pipeHeight + gap);
+    pipes[i].x-=2;
 
     if(pipes[i].x == 500){
-      console.log("Agregar nueva pipe");
-      pipes.push({x:800,y:0});
+      pipes.push({x:800,y:Math.random() * pipeHeight - pipeHeight} );
     }
 
-    if(pipes[i].x < 0){
-      console.log("Eliminar esta pipe");
+    if(pipes[i].x + pipeWidth  < 0){
+      pipes.splice(i, 1);
     }
-    
   }
-
-  
-
 }
 function mousePressed() {
-  spr.position.y -= jump;
+  player.position.y -= jump;
 }
