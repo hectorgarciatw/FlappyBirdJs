@@ -1,21 +1,20 @@
-var player;
-var jump = 50;
-var playerWidth = 50;
-var playerHeight = 40;
-var pipes = [];
-var pipeWidth = 50;
-var pipeHeight = 200;
-var fontSize = 17;
-var score = 0;
-var isPlaying = true;
+let player;
+let jump = 50;
+let playerWidth = 50;
+let playerHeight = 40;
+let pipes = [];
+let pipeWidth = 50;
+let pipeHeight = 200;
+let fontSize = 17;
+let score = 0;
+let isPlaying = true;
 
 pipes[0] = {x:800,y:0};
-var landImgLoc = 0;
 
-
-var x1 = 0;
-var x2;
-var scrollSpeed = 2;
+let landImgLoc = 0;
+let x1 = 0;
+let x2;
+let scrollSpeed = 2;
 
 function preload() {
 
@@ -31,9 +30,11 @@ function preload() {
 
 function setup() {
   createCanvas(800, 375);
+  pipesGroup = new Group();
   x2 = width;
   player = createSprite(50, height/2, playerWidth, playerHeight);
-  var myAnimation = player.addAnimation('flying', 'img/birdImg.png', 'img/birdImgDown.png', 'img/birdImgUp.png');
+  //Animación de las alas
+  let myAnimation = player.addAnimation('flying', 'img/birdImg.png', 'img/birdImgDown.png', 'img/birdImgUp.png');
   player.shapeColor = color(255);
   player.velocity.y = 1.4;
   player.addImage(birdImg);
@@ -44,18 +45,26 @@ function draw() {
   image(bgImg, 0, 0);
   textSize(fontSize);
   drawSprites();
-
   if(player.position.y > 300 || player.position.y < 0){
     gameOver();
   }
 
-
-
+  //Rotación constante del pajaro
+  if (player.rotation < 20){
+    player.rotation += 1; 
+  }
+  
   for (let i = 0; i < pipes.length; i++) {
+    //Elimino las tuberias que salieron de la pantalla
+    if(pipes[i].x + pipeWidth  < 0){
+      pipes.shift(); 
+    }
+    
     image(pipeNorth,pipes[i].x,pipes[i].y);
-    var gap = 110; 
+    let gap = 110; 
     image(pipeSouth,pipes[i].x,pipes[i].y + pipeHeight + gap);
-    pipes[i].x-=2;
+    pipes[i].x-=2.5;  
+
 
     //Colisiones con tuberías (Recordar que el player tiene la imagen en modo CENTER CENTER)
     if( player.position.x + (playerWidth/2 - 5) >= pipes[i].x  && 
@@ -64,12 +73,8 @@ function draw() {
       gameOver();
     }
 
-    if(pipes[i].x == 500){
+    if(pipes[i].x == 550){
       pipes.push({x:800,y:Math.random() * pipeHeight - pipeHeight} );
-    }
-
-    if(pipes[i].x + pipeWidth  < 0){
-      pipes.splice(i, 1);
     }
 
     if(pipes[i].x == player.position.x){
@@ -77,7 +82,7 @@ function draw() {
     }
   }
   
-  //Parallax land´s effect
+  //Efecto parallax de la tierra
   image(landImg, x1, 0, width, height);
   image(landImg, x2, 0, width, height);
         
@@ -101,11 +106,12 @@ function draw() {
 function mousePressed() {
   if(isPlaying){
     jumpSound.play();
+    player.rotation = -20;
     player.position.y -= jump;
   }
 }
 
-//Reloading game
+//Recargando el juego
 function keyPressed() {
   if(keyCode === 82){
     location.reload();
