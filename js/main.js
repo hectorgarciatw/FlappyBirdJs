@@ -1,5 +1,6 @@
+p5.disableFriendlyErrors = true; // disables FES
 let player;
-let jump = 50;
+let jump = 30;
 let playerWidth = 50;
 let playerHeight = 40;
 let pipes = [];
@@ -8,6 +9,12 @@ let pipeHeight = 200;
 let fontSize = 17;
 let score = 0;
 let isPlaying = true;
+let pipesGroup;
+let gap = 155; 
+
+
+let spawnPipeTime = 4000;
+let lastSpawnTime;
 
 pipes[0] = {x:800,y:0};
 
@@ -21,8 +28,8 @@ function preload() {
   birdImg = loadImage('img/birdImg.png');
   bgImg = loadImage('img/bgImg.jpg');
   landImg = loadImage('img/landImg.png');
-  pipeNorth = loadImage('img/pipeNorth2Img.png');
-  pipeSouth = loadImage('img/pipeSouthImg.png');
+  pipeNorthImg = loadImage('img/pipeNorthImg.png');
+  pipeSouthImg = loadImage('img/pipeSouthImg.png');
   jumpSound= loadSound('sounds/jump.wav');
   gameOverSound= loadSound('sounds/gameOver.wav');
   myFont = loadFont('fonts/rules.ttf');
@@ -38,13 +45,22 @@ function setup() {
   player.shapeColor = color(255);
   player.velocity.y = 1.4;
   player.addImage(birdImg);
+  lastSpawnTime = millis();
+  leftScreen = createSprite(-40, height/2, 40, height);
 }
 
 
 function draw() {
+
+  // Draw FPS 
+  /*var fps = frameRate();
+  if(fps.toFixed(2) < 15){
+    console.log("Low fps");
+  }*/
+
   image(bgImg, 0, 0);
   textSize(fontSize);
-  drawSprites();
+  
   if(player.position.y > 300 || player.position.y < 0){
     gameOver();
   }
@@ -53,38 +69,44 @@ function draw() {
   if (player.rotation < 20){
     player.rotation += 1; 
   }
+
   
-  for (let i = 0; i < pipes.length; i++) {
-    //Elimino las tuberias que salieron de la pantalla
-    if(pipes[i].x + pipeWidth  < 0){
-      pipes.shift(); 
-    }
+  //Generación de tuberias por tiempo
+  if(millis() > lastSpawnTime + spawnPipeTime) {
+    let pipeNorthPosY = Math.floor(Math.random() * 70);
+    let pipeNorthSprite = createSprite(850,pipeNorthPosY,pipeWidth, pipeHeight);
+    pipeNorthSprite.setCollider("rectangle", 0, 0, pipeWidth, pipeHeight);
+    pipeNorthSprite.addImage(pipeNorthImg);
     
-    image(pipeNorth,pipes[i].x,pipes[i].y);
-    let gap = 110; 
-    image(pipeSouth,pipes[i].x,pipes[i].y + pipeHeight + gap);
-    pipes[i].x-=2.5;  
+    let pipeSouthSprite = createSprite(850,pipeNorthPosY + pipeHeight + gap ,pipeWidth, pipeHeight);
+    pipeSouthSprite.setCollider("rectangle", 0, 0, pipeWidth, pipeHeight);
+    pipeSouthSprite.addImage(pipeSouthImg);
+    pipesGroup.add(pipeNorthSprite);
+    pipesGroup.add(pipeSouthSprite);
+    
+    pipeNorthSprite.velocity.x = -1;
+    pipeSouthSprite.velocity.x = -1;
+    lastSpawnTime = millis();
+  }
 
-
-    //Colisiones con tuberías (Recordar que el player tiene la imagen en modo CENTER CENTER)
-    if( player.position.x + (playerWidth/2 - 5) >= pipes[i].x  && 
-      ((player.position.y >= pipes[i].y && player.position.y <= pipes[i].y + pipeHeight) || 
-        (player.position.y >= pipes[i].y + pipeHeight + gap && player.position.y <= pipes[i].y + 2*pipeHeight + gap ))){
-      gameOver();
-    }
-
-    if(pipes[i].x == 550){
-      pipes.push({x:800,y:Math.random() * pipeHeight - pipeHeight} );
-    }
-
-    if(pipes[i].x == player.position.x){
-      score++;
+  //Puntos obtenidos en el juego
+  for (let i = 0; i < pipesGroup.length; i++) {
+    if(pipesGroup[i].position.x == player.position.x){
+      score+= 0.5;
     }
   }
+
+  //Colisiones con las tuberias
+  player.overlap(pipesGroup, gameOver);
   
+  //Colisiones con las tuberias
+  leftScreen.overlap(pipesGroup, deletePipe);
+
   //Efecto parallax de la tierra
   image(landImg, x1, 0, width, height);
   image(landImg, x2, 0, width, height);
+
+  drawSprites();
         
   x1 -= scrollSpeed;
   x2 -= scrollSpeed;
@@ -102,7 +124,6 @@ function draw() {
   text('Points   ' + score, 60, height - 7);
 }
 
-
 function mousePressed() {
   if(isPlaying){
     jumpSound.play();
@@ -111,7 +132,7 @@ function mousePressed() {
   }
 }
 
-//Recargando el juego
+//Reinicio del juego
 function keyPressed() {
   if(keyCode === 82){
     location.reload();
@@ -123,7 +144,11 @@ function gameOver(){
   noLoop();
   gameOverSound.play();
   showMenu();
-  
+}
+
+//Elimino la tuberia que salga de la pantalla
+function deletePipe(leftScreenCol,pipeCol){
+  pipeCol.remove();
 }
 
 function showMenu(){
